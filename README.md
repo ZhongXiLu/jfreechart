@@ -5,6 +5,8 @@ Version 1.5.0, 5 November 2017.
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.jfree/jfreechart/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.jfree/jfreechart)
 
+[![](https://codescene.io/projects/4404/status.svg) Get more details at **codescene.io**.](https://codescene.io/projects/4404/jobs/latest-successful/results)
+
 Overview
 --------
 JFreeChart is a comprehensive free chart library for the Java(tm) platform that 
