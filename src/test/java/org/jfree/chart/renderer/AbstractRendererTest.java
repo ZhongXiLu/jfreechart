@@ -801,4 +801,22 @@ public class AbstractRendererTest {
         }
     }
 
+    /**
+     * Test setting an item in a series.
+     */
+    @Test
+    public void testSeriesItemShape() {
+        LineAndShapeRenderer r = new LineAndShapeRenderer();
+
+        assertNull(r.getSeriesItemShape(0, 0));
+
+        for (int series = 0; series < 10; series++) {
+            for (int item = 0; item < 10; item++) {
+                Rectangle2D shape = new Rectangle2D.Double(series, series, item, item);
+                r.setSeriesItemShape(series, item, shape);
+                assertEquals(shape, r.getSeriesItemShape(series, item));
+            }
+        }
+    }
+
 }

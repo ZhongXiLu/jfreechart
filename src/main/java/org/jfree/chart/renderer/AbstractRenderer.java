@@ -1614,9 +1614,23 @@ public abstract class AbstractRenderer implements Cloneable, Serializable {
      * @see #setSeriesShape(int, Shape)
      */
     public Shape getSeriesShape(int series) {
+        // index 0 in shape list is shape representative
+        return getSeriesItemShape(series, 0);
+    }
+
+    /**
+     * Returns the shape of an item in a series.
+     *
+     * @param series    the series (zero-based index).
+     * @param item      the item (zero-based index).
+     *
+     * @return The shape (possibly {@code null}).
+     *
+     * @see #setSeriesItemShape(int, int, Shape)
+     */
+    public Shape getSeriesItemShape(int series, int item) {
         if (this.shapeList.containsKey(series)) {
-            // index 0 in shape list is shape representative
-            return this.shapeList.get(series).getShape(0);
+            return this.shapeList.get(series).getShape(item);
         } else {
             return null;
         }
@@ -1651,9 +1665,53 @@ public abstract class AbstractRenderer implements Cloneable, Serializable {
             this.shapeList.put(series, new ShapeList());
         }
 
-        // set item on index 0 as representative shape for the series
-        // can be extended with more shapes though
-        this.shapeList.get(series).setShape(0, shape);
+        if (this.shapeList.get(series).size() == 0) {
+            // set item on index 0 as representative shape for the series
+            // can be extended with more shapes though
+            this.shapeList.get(series).setShape(0, shape);
+
+        } else {
+            // change all the shapes in the shape list to desired shape
+            for (int i = 0; i < this.shapeList.get(series).size(); i++) {
+                this.shapeList.get(series).setShape(i, shape);
+            }
+        }
+
+        if (notify) {
+            fireChangeEvent();
+        }
+    }
+
+    /**
+     * Returns the shape of an item in a series and sends a
+     * {@link RendererChangeEvent} to all registered listeners.
+     *
+     * @param series    the series (zero-based index).
+     * @param item      the item (zero-based index).
+     *
+     * @see #getSeriesItemShape(int, int)
+     */
+    public void setSeriesItemShape(int series, int item, Shape shape) {
+        setSeriesItemShape(series, item, shape, true);
+    }
+
+    /**
+     * Returns the shape of an item in a series and sends a
+     * {@link RendererChangeEvent} to all registered listeners.
+     *
+     * @param series    the series (zero-based index).
+     * @param item      the item (zero-based index).
+     * @param notify    notify listeners?
+     *
+     * @see #getSeriesItemShape(int, int)
+     */
+    public void setSeriesItemShape(int series, int item, Shape shape, boolean notify) {
+        // Create new shape list if series is not yet in map
+        if (!this.shapeList.containsKey(series)) {
+            this.shapeList.put(series, new ShapeList());
+        }
+
+        this.shapeList.get(series).setShape(item, shape);
 
         if (notify) {
             fireChangeEvent();
