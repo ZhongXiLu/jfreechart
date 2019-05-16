@@ -785,4 +785,20 @@ public class AbstractRendererTest {
         assertNotNull(r.getSeriesOutlinePaint(0));
     }
 
+    /**
+     * Test setting and getting the shape for a series.
+     */
+    @Test
+    public void testSeriesShape() {
+        LineAndShapeRenderer r = new LineAndShapeRenderer();
+
+        assertNull(r.getSeriesShape(0));
+
+        for (int i = 0; i < 10; i++) {
+            Rectangle2D shape = new Rectangle2D.Double(i, i, i, i);
+            r.setSeriesShape(i, shape);
+            assertEquals(shape, r.getSeriesShape(i));
+        }
+    }
+
 }
