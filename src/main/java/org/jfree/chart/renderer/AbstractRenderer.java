@@ -272,7 +272,7 @@ public abstract class AbstractRenderer implements Cloneable, Serializable {
     private boolean autoPopulateSeriesOutlineStroke;
 
     /** A shape list. */
-    private ShapeList shapeList;
+    private Map<Integer, ShapeList> shapeList;
 
     /**
      * A flag that controls whether or not the shapeList is auto-populated
@@ -430,7 +430,7 @@ public abstract class AbstractRenderer implements Cloneable, Serializable {
         this.defaultOutlineStroke = DEFAULT_OUTLINE_STROKE;
         this.autoPopulateSeriesOutlineStroke = false;
 
-        this.shapeList = new ShapeList();
+        this.shapeList = new HashMap<Integer, ShapeList>();
         this.defaultShape = DEFAULT_SHAPE;
         this.autoPopulateSeriesShape = true;
 
@@ -1614,7 +1614,12 @@ public abstract class AbstractRenderer implements Cloneable, Serializable {
      * @see #setSeriesShape(int, Shape)
      */
     public Shape getSeriesShape(int series) {
-        return this.shapeList.getShape(series);
+        if (this.shapeList.containsKey(series)) {
+            // index 0 in shape list is shape representative
+            return this.shapeList.get(series).getShape(0);
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -1641,7 +1646,15 @@ public abstract class AbstractRenderer implements Cloneable, Serializable {
      * @see #getSeriesShape(int)
      */
     public void setSeriesShape(int series, Shape shape, boolean notify) {
-        this.shapeList.setShape(series, shape);
+        // Create new shape list if series is not yet in map
+        if (!this.shapeList.containsKey(series)) {
+            this.shapeList.put(series, new ShapeList());
+        }
+
+        // set item on index 0 as representative shape for the series
+        // can be extended with more shapes though
+        this.shapeList.get(series).setShape(0, shape);
+
         if (notify) {
             fireChangeEvent();
         }
@@ -3131,7 +3144,7 @@ public abstract class AbstractRenderer implements Cloneable, Serializable {
         // 'baseOutlineStroke' : immutable, no need to clone reference
 
         if (this.shapeList != null) {
-            clone.shapeList = (ShapeList) this.shapeList.clone();
+            clone.shapeList = new HashMap<Integer, ShapeList>(this.shapeList);
         }
         if (this.defaultShape != null) {
             clone.defaultShape = ShapeUtils.clone(this.defaultShape);

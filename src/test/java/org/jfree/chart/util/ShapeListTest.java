@@ -51,6 +51,9 @@ public class ShapeListTest {
     @Test
     public void testSimpleGetterAndSetter() {
         ShapeList shapeList = new ShapeList();
+
+        assertNull(shapeList.getShape(100));
+
         for (int i = 0; i < 10; i++) {
             Shape shape = new Rectangle2D.Double(i, -i, i, i);
             shapeList.setShape(i, shape);
