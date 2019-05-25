@@ -55,6 +55,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import org.jfree.chart.plot.DrawingSupplier;
 import org.junit.Test;
 
 import java.awt.BasicStroke;
@@ -67,6 +68,7 @@ import java.awt.Stroke;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 
 import org.jfree.chart.TestUtils;
 import org.jfree.chart.axis.CategoryAxis;
@@ -799,6 +801,17 @@ public class AbstractRendererTest {
             r.setSeriesShape(i, shape);
             assertEquals(shape, r.getSeriesShape(i));
         }
+
+        // Make sure setting series shape overwrites existing shapes in the series
+        r.setSeriesItemShape(10, 0, new Ellipse2D.Double(1, 1, 1 ,1));
+        r.setSeriesItemShape(10, 1, new Rectangle2D.Double(1, 1, 1, 1));
+        r.setSeriesItemShape(10, 2, new RoundRectangle2D.Double(1, 1, 1, 1, 1, 1));
+
+        Ellipse2D ellipse = new Ellipse2D.Double(10, 10, 10 ,10);
+        r.setSeriesShape(10, ellipse);
+        for (int i = 0; i < 3; i++) {
+            assertEquals(ellipse, r.getSeriesItemShape(10, i));
+        }
     }
 
     /**
@@ -817,6 +830,28 @@ public class AbstractRendererTest {
                 assertEquals(shape, r.getSeriesItemShape(series, item));
             }
         }
+    }
+
+    /**
+     * Test getItemShape (and lookupSeriesShape).
+     */
+    @Test
+    public void testGetItemShape() {
+        LineAndShapeRenderer r = new LineAndShapeRenderer();
+
+        r.setAutoPopulateSeriesShape(false);
+        assertEquals(r.getDefaultShape(), r.getItemShape(0, 0));
+        assertEquals(r.getItemShape(0, 0), r.lookupSeriesShape(0));
+
+        r.setAutoPopulateSeriesShape(true);
+        assertNull(r.getDrawingSupplier());
+        assertEquals(r.getDefaultShape(), r.getItemShape(0, 0));
+
+        CategoryPlot plot = new CategoryPlot();
+        r.setPlot(plot);
+        assertNotNull(r.getDrawingSupplier());
+        DrawingSupplier supplier = new DefaultDrawingSupplier();
+        assertEquals(supplier.getNextShape(), r.getItemShape(0, 0));
     }
 
 }
