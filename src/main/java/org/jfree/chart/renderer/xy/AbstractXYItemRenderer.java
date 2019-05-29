@@ -1678,7 +1678,7 @@ public abstract class AbstractXYItemRenderer extends AbstractRenderer
         hotspot.lineTo((float) x, (float) y);
     }
 
-    private void drawValueMarker(Graphics2D g2, Marker marker, Line2D line, PlotOrientation orientation, Rectangle2D dataArea) {
+    public void drawValueMarker(Graphics2D g2, Marker marker, Line2D line, PlotOrientation orientation, Rectangle2D dataArea) {
         final Composite originalComposite = g2.getComposite();
         g2.setComposite(AlphaComposite.getInstance(
                 AlphaComposite.SRC_OVER, marker.getAlpha()));

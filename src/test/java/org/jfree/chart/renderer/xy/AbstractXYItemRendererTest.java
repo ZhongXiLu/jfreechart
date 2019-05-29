@@ -41,10 +41,9 @@
 
 package org.jfree.chart.renderer.xy;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.plot.*;
+import org.jfree.chart.ui.*;
 import org.junit.Test;
 
 import org.jfree.chart.labels.StandardXYSeriesLabelGenerator;
@@ -54,6 +53,13 @@ import org.jfree.data.Range;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+
+import java.awt.*;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests for the {@link AbstractXYItemRenderer} class.
@@ -186,4 +192,24 @@ public class AbstractXYItemRendererTest {
         assertNotEquals(r1, r2);
     }
 
+    /**
+     * Draws a marker to check if the refactoring works
+     */
+    @Test
+    public void testDrawValueMarker() {
+        try {
+            BufferedImage image = new BufferedImage(200 , 100,
+                    BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2 = image.createGraphics();
+            StandardXYItemRenderer std = new StandardXYItemRenderer();
+            Marker marker  = new ValueMarker(5.0);
+            marker.setLabel("testLabel");
+            std.drawValueMarker(g2, new ValueMarker(5.0), new Line2D.Double(0,0,10,10), PlotOrientation.HORIZONTAL, new Rectangle2D.Double(50,50,100,50));
+            std.drawValueMarker(g2, marker, new Line2D.Double(0,0,10,10), PlotOrientation.HORIZONTAL, new Rectangle2D.Double(50,50,100,50));
+            g2.dispose();
+        }
+        catch (Exception e) {
+            fail("There should be no exception.");
+        }
+    }
 }
