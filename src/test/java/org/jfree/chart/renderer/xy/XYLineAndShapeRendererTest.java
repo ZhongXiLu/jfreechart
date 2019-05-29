@@ -44,10 +44,6 @@
 
 package org.jfree.chart.renderer.xy;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 
@@ -57,6 +53,7 @@ import org.jfree.chart.LegendItem;
 import org.jfree.chart.TestUtils;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.urls.TimeSeriesURLGenerator;
 import org.jfree.chart.util.PublicCloneable;
@@ -65,6 +62,8 @@ import org.jfree.data.xy.TableXYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests for the {@link XYLineAndShapeRenderer} class.
@@ -220,6 +219,20 @@ public class XYLineAndShapeRendererTest {
         XYLineAndShapeRenderer r2 = (XYLineAndShapeRenderer) 
                 TestUtils.serialised(r1);
         assertEquals(r1, r2);
+    }
+
+    /**
+     * Test some default getters with their default initialized values.
+     */
+    @Test
+    public void testDefaultGetters() {
+        XYLineAndShapeRenderer r = new XYLineAndShapeRenderer();
+        assertFalse(r.getDrawSeriesLineAsPath());
+        assertTrue(r.getDefaultLinesVisible());
+        assertNotNull(r.getLegendLine());
+        assertTrue(r.getDefaultShapesVisible());
+        assertTrue(r.getDefaultShapesFilled());
+        assertFalse(r.getUseFillPaint());
     }
 
     /**
