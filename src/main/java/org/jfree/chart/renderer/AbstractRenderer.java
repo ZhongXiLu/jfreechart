@@ -1683,7 +1683,7 @@ public abstract class AbstractRenderer implements Cloneable, Serializable {
     }
 
     /**
-     * Returns the shape of an item in a series and sends a
+     * Sets the shape of an item in a series and sends a
      * {@link RendererChangeEvent} to all registered listeners.
      *
      * @param series    the series (zero-based index).
@@ -1696,7 +1696,7 @@ public abstract class AbstractRenderer implements Cloneable, Serializable {
     }
 
     /**
-     * Returns the shape of an item in a series and sends a
+     * Sets the shape of an item in a series and sends a
      * {@link RendererChangeEvent} to all registered listeners.
      *
      * @param series    the series (zero-based index).

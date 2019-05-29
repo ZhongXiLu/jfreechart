@@ -55,20 +55,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.jfree.chart.plot.DrawingSupplier;
+import org.jfree.chart.plot.*;
 import org.junit.Test;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.GradientPaint;
-import java.awt.Rectangle;
-import java.awt.Shape;
-import java.awt.Stroke;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
+import java.awt.*;
+import java.awt.geom.*;
 
 import org.jfree.chart.TestUtils;
 import org.jfree.chart.axis.CategoryAxis;
@@ -77,8 +68,6 @@ import org.jfree.chart.event.RendererChangeEvent;
 import org.jfree.chart.event.RendererChangeListener;
 import org.jfree.chart.labels.ItemLabelAnchor;
 import org.jfree.chart.labels.ItemLabelPosition;
-import org.jfree.chart.plot.CategoryPlot;
-import org.jfree.chart.plot.DefaultDrawingSupplier;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
@@ -97,8 +86,14 @@ public class AbstractRendererTest {
         // have to use a concrete subclass...
         BarRenderer r1 = new BarRenderer();
         BarRenderer r2 = new BarRenderer();
+        assertTrue(r1.equals(r1));
+        assertFalse(r1.equals(new XYPlot()));
         assertTrue(r1.equals(r2));
         assertTrue(r2.equals(r1));
+        r2.setDataBoundsIncludesVisibleSeriesOnly(!r1.getDataBoundsIncludesVisibleSeriesOnly());
+        assertFalse(r1.equals(r2));
+        r2.setDataBoundsIncludesVisibleSeriesOnly(r1.getDataBoundsIncludesVisibleSeriesOnly());
+        assertTrue(r1.equals(r2));
 
         // seriesVisibleList
         r1.setSeriesVisible(2, Boolean.TRUE);
@@ -722,15 +717,32 @@ public class AbstractRendererTest {
     }
 
     /**
+     * Test some default getters with their default initialized values.
+     */
+    @Test
+    public void testDefaultGetters() {
+        BarRenderer r = new BarRenderer();
+
+        assertEquals(2.0, r.getItemLabelAnchorOffset(), 0.0001);
+        assertTrue(r.getDefaultCreateEntities());
+        assertEquals(3, r.getDefaultEntityRadius());
+        assertEquals(new Rectangle2D.Double(-4, -4, 8, 8), r.getDefaultLegendShape());
+        assertNull(r.getDefaultLegendTextFont());
+        assertNull(r.getDefaultLegendTextPaint());
+    }
+
+    /**
      * Some checks for the paint lookup mechanism.
      */
     @Test
     public void testPaintLookup() {
         BarRenderer r = new BarRenderer();
+        r.clearSeriesPaints(true);
         assertEquals(Color.BLUE, r.getDefaultPaint());
 
         // first check that autoPopulate==false works as expected
         r.setAutoPopulateSeriesPaint(false);
+        assertEquals(Color.BLUE, r.getItemPaint(0, 0));
         assertEquals(Color.BLUE, r.lookupSeriesPaint(0));
         assertNull(r.getSeriesPaint(0));
 
@@ -740,6 +752,8 @@ public class AbstractRendererTest {
                 "Category"), new NumberAxis("Value"), r);
         assertEquals(DefaultDrawingSupplier.DEFAULT_PAINT_SEQUENCE[0],
                 r.lookupSeriesPaint(0));
+        assertEquals(DefaultDrawingSupplier.DEFAULT_PAINT_SEQUENCE[0],
+                r.getItemPaint(0, 0));
         assertNotNull(r.getSeriesPaint(0));
     }
 
@@ -754,6 +768,7 @@ public class AbstractRendererTest {
         // first check that autoPopulate==false works as expected
         r.setAutoPopulateSeriesFillPaint(false);
         assertEquals(Color.WHITE, r.lookupSeriesFillPaint(0));
+        assertEquals(Color.WHITE, r.getItemFillPaint(0, 0));
         assertNull(r.getSeriesFillPaint(0));
 
         // now check autoPopulate==true
@@ -762,6 +777,8 @@ public class AbstractRendererTest {
                 "Category"), new NumberAxis("Value"), r);
         assertEquals(DefaultDrawingSupplier.DEFAULT_FILL_PAINT_SEQUENCE[0],
                 r.lookupSeriesFillPaint(0));
+        assertEquals(DefaultDrawingSupplier.DEFAULT_FILL_PAINT_SEQUENCE[0],
+                r.getItemFillPaint(0, 0));
         assertNotNull(r.getSeriesFillPaint(0));
     }
 
@@ -776,6 +793,7 @@ public class AbstractRendererTest {
         // first check that autoPopulate==false works as expected
         r.setAutoPopulateSeriesOutlinePaint(false);
         assertEquals(Color.GRAY, r.lookupSeriesOutlinePaint(0));
+        assertEquals(Color.GRAY, r.getItemOutlinePaint(0, 0));
         assertNull(r.getSeriesOutlinePaint(0));
 
         // now check autoPopulate==true
@@ -784,6 +802,8 @@ public class AbstractRendererTest {
                 "Category"), new NumberAxis("Value"), r);
         assertEquals(DefaultDrawingSupplier.DEFAULT_OUTLINE_PAINT_SEQUENCE[0],
                 r.lookupSeriesOutlinePaint(0));
+        assertEquals(DefaultDrawingSupplier.DEFAULT_OUTLINE_PAINT_SEQUENCE[0],
+                r.getItemOutlinePaint(0, 0));
         assertNotNull(r.getSeriesOutlinePaint(0));
     }
 
@@ -854,4 +874,247 @@ public class AbstractRendererTest {
         assertEquals(supplier.getNextShape(), r.getItemShape(0, 0));
     }
 
+    /**
+     * Test series visibility.
+     */
+    @Test
+    public void testSeriesVisibility() {
+        LineAndShapeRenderer r = new LineAndShapeRenderer();
+        assertTrue(r.getDefaultSeriesVisible());
+
+        r.setDefaultSeriesVisible(true);
+        assertTrue(r.getItemVisible(0, 0));
+        assertTrue(r.isSeriesVisible(0));
+
+        r.setDefaultSeriesVisible(false);
+        assertFalse(r.getItemVisible(0, 0));
+        assertFalse(r.isSeriesVisible(0));
+
+        r.setSeriesVisible(0, true);
+        assertTrue(r.getSeriesVisible(0));
+        assertTrue(r.isSeriesVisible(0));
+        r.setSeriesVisible(1, false);
+        assertFalse(r.getSeriesVisible(1));
+        assertFalse(r.isSeriesVisible(1));
+
+    }
+
+    /**
+     * Test series visibility in legend.
+     */
+    @Test
+    public void testSeriesVisibilityInLegend() {
+        LineAndShapeRenderer r = new LineAndShapeRenderer();
+        assertTrue(r.getDefaultSeriesVisibleInLegend());
+
+        r.setDefaultSeriesVisibleInLegend(true);
+        assertTrue(r.isSeriesVisibleInLegend(0));
+
+        r.setDefaultSeriesVisibleInLegend(false);
+        assertFalse(r.isSeriesVisibleInLegend(0));
+
+        r.setSeriesVisibleInLegend(0, true);
+        assertTrue(r.getSeriesVisibleInLegend(0));
+        assertTrue(r.isSeriesVisibleInLegend(0));
+        r.setSeriesVisibleInLegend(1, false);
+        assertFalse(r.getSeriesVisibleInLegend(1));
+        assertFalse(r.isSeriesVisibleInLegend(1));
+
+    }
+
+    /**
+     * Test series strokes and outline strokes.
+     */
+    @Test
+    public void testSeriesStroke() {
+        LineAndShapeRenderer r = new LineAndShapeRenderer();
+        r.clearSeriesStrokes(true);
+        assertEquals(new BasicStroke(1.0f), r.getDefaultStroke());
+        assertEquals(new BasicStroke(1.0f), r.getDefaultOutlineStroke());
+
+        r.setAutoPopulateSeriesStroke(false);
+        r.setAutoPopulateSeriesOutlineStroke(false);
+        assertNull(r.getSeriesStroke(0));
+        assertNull(r.getSeriesOutlineStroke(0));
+        assertEquals(r.getDefaultStroke(), r.getItemOutlineStroke(0, 0));
+        assertEquals(r.getDefaultStroke(), r.lookupSeriesOutlineStroke(0));
+
+        r.setAutoPopulateSeriesStroke(true);
+        r.setAutoPopulateSeriesOutlineStroke(true);
+        assertNull(r.getSeriesStroke(1));
+        assertNull(r.getSeriesOutlineStroke(1));
+        assertEquals(r.getDefaultStroke(), r.lookupSeriesStroke(1));
+        assertEquals(r.getDefaultStroke(), r.lookupSeriesOutlineStroke(1));
+
+        CategoryPlot plot = new CategoryPlot();
+        r.setPlot(plot);
+        assertNotNull(r.getDrawingSupplier());
+        DrawingSupplier supplier = new DefaultDrawingSupplier();
+        assertEquals(supplier.getNextStroke(), r.lookupSeriesStroke(2));
+        assertEquals(supplier.getNextOutlineStroke(), r.lookupSeriesOutlineStroke(2));
+
+    }
+
+    /**
+     * Test item label visibility.
+     */
+    @Test
+    public void testItemLabelVisibility() {
+        LineAndShapeRenderer r = new LineAndShapeRenderer();
+        assertFalse(r.getDefaultItemLabelsVisible());
+
+        assertFalse(r.isSeriesItemLabelsVisible(0));
+        assertFalse(r.isItemLabelVisible(0, 0));
+
+        r.setDefaultItemLabelsVisible(true);
+        assertTrue(r.isSeriesItemLabelsVisible(0));
+        assertTrue(r.isItemLabelVisible(0, 0));
+
+        r.setSeriesItemLabelsVisible(1, true);
+        assertTrue(r.isSeriesItemLabelsVisible(1));
+        assertTrue(r.isItemLabelVisible(1, 0));
+        r.setSeriesItemLabelsVisible(2, false);
+        assertFalse(r.isSeriesItemLabelsVisible(2));
+        assertFalse(r.isItemLabelVisible(2, 0));
+    }
+
+    /**
+     * Test item label font.
+     */
+    @Test
+    public void testItemLabelFont() {
+        LineAndShapeRenderer r = new LineAndShapeRenderer();
+        assertEquals(new Font("SansSerif", Font.PLAIN, 10), r.getDefaultItemLabelFont());
+
+        assertEquals(r.getDefaultItemLabelFont(), r.getItemLabelFont(0, 0));
+        assertNull(r.getSeriesItemLabelFont(0));
+
+        Font comicSans = new Font("ComicSans", Font.PLAIN, 12);
+        r.setSeriesItemLabelFont(1 , comicSans);
+        assertEquals(comicSans, r.getSeriesItemLabelFont(1));
+    }
+
+    /**
+     * Test item label paint.
+     */
+    @Test
+    public void testItemLabelPaint() {
+        LineAndShapeRenderer r = new LineAndShapeRenderer();
+        assertEquals(Color.BLACK, r.getDefaultItemLabelPaint());
+
+        assertEquals(r.getDefaultItemLabelPaint(), r.getItemLabelPaint(0, 0));
+        assertNull(r.getSeriesItemLabelPaint(0));
+
+        Color red = Color.RED;
+        r.setSeriesItemLabelPaint(1 , red);
+        assertEquals(red, r.getSeriesItemLabelPaint(1));
+    }
+
+    /**
+     * Test (positive and negative) item label position.
+     */
+    @Test
+    public void testItemLabelPosition() {
+        LineAndShapeRenderer r = new LineAndShapeRenderer();
+
+        assertEquals(new ItemLabelPosition(ItemLabelAnchor.OUTSIDE12, TextAnchor.BOTTOM_CENTER),
+                r.getDefaultPositiveItemLabelPosition());
+        assertEquals(new ItemLabelPosition(ItemLabelAnchor.OUTSIDE6, TextAnchor.TOP_CENTER),
+                r.getDefaultNegativeItemLabelPosition());
+
+        assertEquals(r.getDefaultPositiveItemLabelPosition(), r.getPositiveItemLabelPosition(0, 0));
+        assertEquals(r.getDefaultPositiveItemLabelPosition(), r.getSeriesPositiveItemLabelPosition(0));
+        assertEquals(r.getDefaultNegativeItemLabelPosition(), r.getNegativeItemLabelPosition(0, 0));
+        assertEquals(r.getDefaultNegativeItemLabelPosition(), r.getSeriesNegativeItemLabelPosition(0));
+
+        ItemLabelPosition pos1 = new ItemLabelPosition(ItemLabelAnchor.OUTSIDE1, TextAnchor.TOP_RIGHT);
+        ItemLabelPosition pos2 = new ItemLabelPosition(ItemLabelAnchor.OUTSIDE2, TextAnchor.BOTTOM_LEFT);
+        r.setSeriesPositiveItemLabelPosition(1, pos1);
+        r.setSeriesNegativeItemLabelPosition(2, pos2);
+        assertEquals(pos1, r.getSeriesPositiveItemLabelPosition(1));
+        assertEquals(pos2, r.getSeriesNegativeItemLabelPosition(2));
+    }
+
+    /**
+     * Test setting and getting dataBoundsIncludesVisibleSeriesOnly.
+     */
+    @Test
+    public void testDataBoundsIncludesVisibleSeriesOnly() {
+        LineAndShapeRenderer r = new LineAndShapeRenderer();
+        assertTrue(r.getDataBoundsIncludesVisibleSeriesOnly());
+        r.setDataBoundsIncludesVisibleSeriesOnly(false);
+        assertFalse(r.getDataBoundsIncludesVisibleSeriesOnly());
+    }
+
+    /**
+     * Test calculateLabelAnchorPoint.
+     */
+    @Test
+    public void testCalculateLabelAnchorPoint() {
+        LineAndShapeRenderer r = new LineAndShapeRenderer();
+
+        double ADJ = Math.cos(Math.PI / 6.0);
+        double OPP = Math.sin(Math.PI / 6.0);
+        double itemLabelAnchorOffset = r.getItemLabelAnchorOffset();
+
+        assertEquals(new Point2D.Double(7, 7),
+                r.calculateLabelAnchorPoint(ItemLabelAnchor.CENTER, 7, 7, null));
+        assertEquals(new Point2D.Double(7 + OPP * itemLabelAnchorOffset, 7 - ADJ * itemLabelAnchorOffset),
+                r.calculateLabelAnchorPoint(ItemLabelAnchor.INSIDE1, 7, 7, null));
+        assertEquals(new Point2D.Double(7 + ADJ * itemLabelAnchorOffset, 7 - OPP * itemLabelAnchorOffset),
+                r.calculateLabelAnchorPoint(ItemLabelAnchor.INSIDE2, 7, 7, null));
+        assertEquals(new Point2D.Double(7 + itemLabelAnchorOffset, 7),
+                r.calculateLabelAnchorPoint(ItemLabelAnchor.INSIDE3, 7, 7, null));
+        assertEquals(new Point2D.Double(7 + ADJ * itemLabelAnchorOffset, 7 + OPP * itemLabelAnchorOffset),
+                r.calculateLabelAnchorPoint(ItemLabelAnchor.INSIDE4, 7, 7, null));
+        assertEquals(new Point2D.Double(7 + OPP * itemLabelAnchorOffset, 7 + ADJ * itemLabelAnchorOffset),
+                r.calculateLabelAnchorPoint(ItemLabelAnchor.INSIDE5, 7, 7, null));
+        assertEquals(new Point2D.Double(7, 7 + itemLabelAnchorOffset),
+                r.calculateLabelAnchorPoint(ItemLabelAnchor.INSIDE6, 7, 7, null));
+        assertEquals(new Point2D.Double(7 - OPP * itemLabelAnchorOffset, 7 + ADJ * itemLabelAnchorOffset),
+                r.calculateLabelAnchorPoint(ItemLabelAnchor.INSIDE7, 7, 7, null));
+        assertEquals(new Point2D.Double(7 - ADJ * itemLabelAnchorOffset, 7 + OPP * itemLabelAnchorOffset),
+                r.calculateLabelAnchorPoint(ItemLabelAnchor.INSIDE8, 7, 7, null));
+        assertEquals(new Point2D.Double(7 - itemLabelAnchorOffset, 7),
+                r.calculateLabelAnchorPoint(ItemLabelAnchor.INSIDE9, 7, 7, null));
+        assertEquals(new Point2D.Double(7 - ADJ * itemLabelAnchorOffset, 7 - OPP * itemLabelAnchorOffset),
+                r.calculateLabelAnchorPoint(ItemLabelAnchor.INSIDE10, 7, 7, null));
+        assertEquals(new Point2D.Double(7 - OPP * itemLabelAnchorOffset, 7 - ADJ * itemLabelAnchorOffset),
+                r.calculateLabelAnchorPoint(ItemLabelAnchor.INSIDE11, 7, 7, null));
+        assertEquals(new Point2D.Double(7, 7 - itemLabelAnchorOffset),
+                r.calculateLabelAnchorPoint(ItemLabelAnchor.INSIDE12, 7, 7, null));
+
+        assertEquals(new Point2D.Double(
+                7 + 2.0 * OPP * itemLabelAnchorOffset,
+                7 - 2.0 * ADJ * itemLabelAnchorOffset), r.calculateLabelAnchorPoint(ItemLabelAnchor.OUTSIDE1, 7, 7, null));
+        assertEquals(new Point2D.Double(
+                7 + 2.0 * ADJ * itemLabelAnchorOffset,
+                7 - 2.0 * OPP * itemLabelAnchorOffset), r.calculateLabelAnchorPoint(ItemLabelAnchor.OUTSIDE2, 7, 7, null));
+        assertEquals(new Point2D.Double(7 + 2.0 * itemLabelAnchorOffset,
+                7), r.calculateLabelAnchorPoint(ItemLabelAnchor.OUTSIDE3, 7, 7, null));
+        assertEquals(new Point2D.Double(
+                7 + 2.0 * ADJ * itemLabelAnchorOffset,
+                7 + 2.0 * OPP * itemLabelAnchorOffset), r.calculateLabelAnchorPoint(ItemLabelAnchor.OUTSIDE4, 7, 7, null));
+        assertEquals(new Point2D.Double(
+                7 + 2.0 * OPP * itemLabelAnchorOffset,
+                7 + 2.0 * ADJ * itemLabelAnchorOffset), r.calculateLabelAnchorPoint(ItemLabelAnchor.OUTSIDE5, 7, 7, null));
+        assertEquals(new Point2D.Double(7,
+                7 + 2.0 * itemLabelAnchorOffset), r.calculateLabelAnchorPoint(ItemLabelAnchor.OUTSIDE6, 7, 7, null));
+        assertEquals(new Point2D.Double(
+                7 - 2.0 * OPP * itemLabelAnchorOffset,
+                7 + 2.0 * ADJ * itemLabelAnchorOffset), r.calculateLabelAnchorPoint(ItemLabelAnchor.OUTSIDE7, 7, 7, null));
+        assertEquals(new Point2D.Double(
+                7 - 2.0 * ADJ * itemLabelAnchorOffset,
+                7 + 2.0 * OPP * itemLabelAnchorOffset), r.calculateLabelAnchorPoint(ItemLabelAnchor.OUTSIDE8, 7, 7, null));
+        assertEquals(new Point2D.Double(7 - 2.0 * itemLabelAnchorOffset,
+                7), r.calculateLabelAnchorPoint(ItemLabelAnchor.OUTSIDE9, 7, 7, null));
+        assertEquals(new Point2D.Double(
+                7 - 2.0 * ADJ * itemLabelAnchorOffset,
+                7 - 2.0 * OPP * itemLabelAnchorOffset), r.calculateLabelAnchorPoint(ItemLabelAnchor.OUTSIDE10, 7, 7, null));
+        assertEquals(new Point2D.Double(
+                7 - 2.0 * OPP * itemLabelAnchorOffset,
+                7 - 2.0 * ADJ * itemLabelAnchorOffset), r.calculateLabelAnchorPoint(ItemLabelAnchor.OUTSIDE11, 7, 7, null));
+        assertEquals(new Point2D.Double(7,
+                7 - 2.0 * itemLabelAnchorOffset), r.calculateLabelAnchorPoint(ItemLabelAnchor.OUTSIDE12, 7, 7, null));
+    }
 }
